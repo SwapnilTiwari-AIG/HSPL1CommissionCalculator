@@ -15,7 +15,6 @@
     <script type="text/babel">
         const { useState } = React;
         
-        // Lucide icons as SVG components
         const Calculator = () => (
             <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
@@ -312,15 +311,20 @@
             totalCommission += f2PLI_SR;
 
             let directORNTotal = 0;
+            let totalORNCount = 0;
             directORN.forEach((orn) => {
-              const rate = getDirectORNRate(orn.planValue, orn.validity, directORN.length);
-              directORNTotal += rate;
+              totalORNCount += orn.quantity;
+            });
+            
+            directORN.forEach((orn) => {
+              const rate = getDirectORNRate(orn.planValue, orn.validity, totalORNCount);
+              directORNTotal += rate * orn.quantity;
             });
             
             if (directORN.length > 0) {
               breakdown.push({
                 title: 'Direct ORN',
-                formula: directORN.length + ' ORNs',
+                formula: totalORNCount + ' ORNs (Slab: ' + (totalORNCount >= 25 ? '≥25' : '1-24') + ')',
                 amount: directORNTotal
               });
               totalCommission += directORNTotal;
@@ -420,7 +424,7 @@
           };
 
           const addDirectORN = () => {
-            setDirectORN([...directORN, { planValue: '398', validity: '5M' }]);
+            setDirectORN([...directORN, { planValue: '398', validity: '5M', quantity: 1 }]);
           };
 
           const updateDirectORN = (index, field, value) => {
@@ -456,319 +460,7 @@
                           type="text"
                           value={partnerInfo.name}
                           onChange={(e) => setPartnerInfo({...partnerInfo, name: e.target.value})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Data Usage Met</label>
-                        <input
-                          type="number"
-                          value={fortnight2.dataUsageMet}
-                          onChange={(e) => setFortnight2({...fortnight2, dataUsageMet: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">STB Demo Done</label>
-                        <input
-                          type="number"
-                          value={fortnight2.stbDemoCompleted}
-                          onChange={(e) => setFortnight2({...fortnight2, stbDemoCompleted: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-yellow-50 rounded-lg p-4 mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3">KPI Performance</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Speed (%)</label>
-                        <input
-                          type="number"
-                          value={kpi.speedExecution}
-                          onChange={(e) => setKpi({...kpi, speedExecution: parseFloat(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                          max="100"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Quality (%)</label>
-                        <input
-                          type="number"
-                          value={kpi.qualityInstall}
-                          onChange={(e) => setKpi({...kpi, qualityInstall: parseFloat(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                          max="100"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">CSAT (%)</label>
-                        <input
-                          type="number"
-                          value={kpi.csat}
-                          onChange={(e) => setKpi({...kpi, csat: parseFloat(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                          max="100"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Repeat SR (%)</label>
-                        <input
-                          type="number"
-                          value={kpi.repeatSR}
-                          onChange={(e) => setKpi({...kpi, repeatSR: parseFloat(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                          max="100"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-purple-50 rounded-lg p-4 mb-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <h2 className="text-xl font-semibold text-gray-800">Direct ORN</h2>
-                      <button
-                        onClick={addDirectORN}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                      >
-                        <Plus />
-                        Add ORN
-                      </button>
-                    </div>
-                    {directORN.map((orn, index) => (
-                      <div key={index} className="flex gap-2 mb-2">
-                        <select
-                          value={orn.planValue}
-                          onChange={(e) => updateDirectORN(index, 'planValue', e.target.value)}
-                          className="flex-1 px-3 py-2 border rounded-md"
-                        >
-                          <option value="398">₹398</option>
-                          <option value="399">₹399</option>
-                          <option value="1111">₹1111</option>
-                          <option value="599">₹599</option>
-                          <option value="888">₹888</option>
-                          <option value="699">₹699</option>
-                          <option value="899+">₹899+</option>
-                        </select>
-                        <select
-                          value={orn.validity}
-                          onChange={(e) => updateDirectORN(index, 'validity', e.target.value)}
-                          className="flex-1 px-3 py-2 border rounded-md"
-                        >
-                          <option value="1.6M">1.6M</option>
-                          <option value="2M">2M</option>
-                          <option value="3M">3M</option>
-                          <option value="5M">5M</option>
-                          <option value="6M">6M</option>
-                          <option value="12M">12M</option>
-                        </select>
-                        <button
-                          onClick={() => removeDirectORN(index)}
-                          className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                        >
-                          <Trash2 />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Other Commissions</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">₹4444 Booking</label>
-                        <input
-                          type="number"
-                          value={bookings.booking4444}
-                          onChange={(e) => setBookings({...bookings, booking4444: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">₹3333 Booking</label>
-                        <input
-                          type="number"
-                          value={bookings.booking3333}
-                          onChange={(e) => setBookings({...bookings, booking3333: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">₹2222 Booking</label>
-                        <input
-                          type="number"
-                          value={bookings.booking2222}
-                          onChange={(e) => setBookings({...bookings, booking2222: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">₹1111 Booking</label>
-                        <input
-                          type="number"
-                          value={bookings.booking1111}
-                          onChange={(e) => setBookings({...bookings, booking1111: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Own B2ORN</label>
-                        <input
-                          type="number"
-                          value={bookingToORN.own}
-                          onChange={(e) => setBookingToORN({...bookingToORN, own: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Others B2ORN</label>
-                        <input
-                          type="number"
-                          value={bookingToORN.others}
-                          onChange={(e) => setBookingToORN({...bookingToORN, others: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">UO F1</label>
-                        <input
-                          type="number"
-                          value={unlimitedOffer.fortnight1}
-                          onChange={(e) => setUnlimitedOffer({...unlimitedOffer, fortnight1: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">UO F2</label>
-                        <input
-                          type="number"
-                          value={unlimitedOffer.fortnight2}
-                          onChange={(e) => setUnlimitedOffer({...unlimitedOffer, fortnight2: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">SKYC New</label>
-                        <input
-                          type="number"
-                          value={skyc.newActivation}
-                          onChange={(e) => setSkyc({...skyc, newActivation: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">SKYC MNP</label>
-                        <input
-                          type="number"
-                          value={skyc.mnp}
-                          onChange={(e) => setSkyc({...skyc, mnp: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">JCM0112</label>
-                        <input
-                          type="number"
-                          value={extender.jcm0112}
-                          onChange={(e) => setExtender({...extender, jcm0112: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">JE6801</label>
-                        <input
-                          type="number"
-                          value={extender.je6801}
-                          onChange={(e) => setExtender({...extender, je6801: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Starter Pack</label>
-                        <input
-                          type="number"
-                          value={other.starterPack}
-                          onChange={(e) => setOther({...other, starterPack: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Matching No.</label>
-                        <input
-                          type="number"
-                          value={other.matchingNumber}
-                          onChange={(e) => setOther({...other, matchingNumber: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Commission Breakdown</h2>
-                    <div className="space-y-3">
-                      {result.breakdown.map((item, index) => (
-                        <div key={index} className="bg-white rounded-lg p-4 shadow-sm">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-semibold text-gray-700">{item.title}</h3>
-                            <span className="text-lg font-bold text-green-600">
-                              ₹{item.amount.toFixed(2)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
-                            {item.formula}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-6 pt-6 border-t-2 border-gray-300">
-                      <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-gray-800">Total Commission</h2>
-                        <span className="text-3xl font-bold text-green-600">
-                          ₹{result.totalCommission.toFixed(2)}
-                        </span>
-                      </div>
-                      {partnerInfo.name && (
-                        <p className="text-sm text-gray-600 mt-2">
-                          Partner: {partnerInfo.name} | PRM ID: {partnerInfo.prmId} | JC Type: {partnerInfo.jcType}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<HSPLCommissionCalculator />);
-    </script>
-</body>
-</html>-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           placeholder="Enter name"
                         />
                       </div>
@@ -892,14 +584,4 @@
                           type="number"
                           value={fortnight2.muToUbrWO}
                           onChange={(e) => setFortnight2({...fortnight2, muToUbrWO: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border rounded-md"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Device SR</label>
-                        <input
-                          type="number"
-                          value={fortnight2.deviceReplacementSR}
-                          onChange={(e) => setFortnight2({...fortnight2, deviceReplacementSR: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py
+                          className="w-full px-3

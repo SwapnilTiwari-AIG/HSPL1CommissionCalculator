@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSP Lite-1 Commission Calculator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        // Lucide icons as SVG components
+        const Calculator = () => (
+            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                <line x1="8" y1="6" x2="16" y2="6"></line>
+                <line x1="8" y1="10" x2="16" y2="10"></line>
+                <line x1="8" y1="14" x2="16" y2="14"></line>
+                <line x1="8" y1="18" x2="16" y2="18"></line>
+            </svg>
+        );
+        
+        const User = () => (
+            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        );
+        
+        const Plus = () => (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+        
+        const Trash2 = () => (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        );
+
+        function HSPLCommissionCalculator() {
+          const [partnerInfo, setPartnerInfo] = useState({
+            name: '',
+            prmId: '',
+            jcType: 'Type-A'
+          });
+
+          const [fortnight1, setFortnight1] = useState({
+            installWO: 0,
+            relocationWO: 0,
+            muToUbrWO: 0,
+            deviceReplacementSR: 0,
+            dataUsageMet: 0,
+            stbDemoCompleted: 0
+          });
+
+          const [fortnight2, setFortnight2] = useState({
+            installWO: 0,
+            relocationWO: 0,
+            muToUbrWO: 0,
+            deviceReplacementSR: 0,
+            dataUsageMet: 0,
+            stbDemoCompleted: 0
+          });
+
+          const [kpi, setKpi] = useState({
+            speedExecution: 0,
+            qualityInstall: 0,
+            csat: 0,
+            repeatSR: 0
+          });
+
+          const [directORN, setDirectORN] = useState([]);
+          
+          const [bookings, setBookings] = useState({
+            booking4444: 0,
+            booking3333: 0,
+            booking2222: 0,
+            booking1111: 0
+          });
+
+          const [bookingToORN, setBookingToORN] = useState({
+            own: 0,
+            others: 0
+          });
+
+          const [unlimitedOffer, setUnlimitedOffer] = useState({
+            fortnight1: 0,
+            fortnight2: 0
+          });
+
+          const [skyc, setSkyc] = useState({
+            newActivation: 0,
+            mnp: 0
+          });
+
+          const [extender, setExtender] = useState({
+            jcm0112: 0,
+            je6801: 0
+          });
+
+          const [other, setOther] = useState({
+            starterPack: 0,
+            matchingNumber: 0
+          });
+
+          const getKPIScore = (value, type) => {
+            if (type === 'speed' || type === 'csat') {
+              if (value <= 75) return 0;
+              if (value <= 80) return 1;
+              if (value <= 85) return 2;
+              if (value <= 90) return 3;
+              if (value <= 95) return 4;
+              return 5;
+            } else {
+              if (value >= 2) return 0;
+              if (value >= 1.75) return 1;
+              if (value >= 1.5) return 2;
+              if (value >= 1.25) return 3;
+              if (value >= 1) return 4;
+              return 5;
+            }
+          };
+
+          const getRatingMultiplier = (avgScore) => {
+            if (avgScore === 5) return 1.25;
+            if (avgScore >= 4.75) return 1.1;
+            if (avgScore >= 4.5) return 1.0;
+            if (avgScore >= 4.0) return 0.75;
+            if (avgScore >= 3.5) return 0.5;
+            return 0;
+          };
+
+          const getPLIRate = (woCount, jcType) => {
+            if (woCount < 20) return 0;
+            if (woCount < 40) return jcType === 'Type-C' ? 25 : 35;
+            return jcType === 'Type-C' ? 72 : 96;
+          };
+
+          const getUnlimitedOfferRate = (count) => {
+            if (count < 30) return 0;
+            if (count < 50) return 20;
+            if (count < 100) return 30;
+            return 40;
+          };
+
+          const getExtenderRate = (totalCount, model) => {
+            if (totalCount < 4) return 100;
+            if (totalCount < 10) return model === 'JE6801' ? 300 : 200;
+            return model === 'JE6801' ? 500 : 300;
+          };
+
+          const getDirectORNRate = (planValue, validity, totalORN) => {
+            const slab = totalORN >= 25 ? 'high' : 'low';
+            
+            const rates = {
+              '398-5M': { low: 96, high: 121 },
+              '399-6M': { low: 242, high: 290 },
+              '399-12M': { low: 290, high: 339 },
+              '1111-1.6M': { low: 125, high: 150 },
+              '1111-2M': { low: 125, high: 150 },
+              '1111-3M': { low: 125, high: 150 },
+              '599-3M': { low: 218, high: 266 },
+              '599-6M': { low: 339, high: 387 },
+              '599-12M': { low: 387, high: 436 },
+              '888-3M': { low: 218, high: 266 },
+              '888-6M': { low: 339, high: 387 },
+              '888-12M': { low: 387, high: 436 },
+              '699-3M': { low: 266, high: 315 },
+              '699-6M': { low: 387, high: 436 },
+              '699-12M': { low: 436, high: 484 },
+              '899+-3M': { low: 339, high: 387 },
+              '899+-6M': { low: 484, high: 533 },
+              '899+-12M': { low: 533, high: 581 }
+            };
+
+            const key = planValue + '-' + validity;
+            return rates[key] ? rates[key][slab] : 0;
+          };
+
+          const calculateCommission = () => {
+            const breakdown = [];
+            let totalCommission = 0;
+
+            const f1EligibleWO = Math.min(fortnight1.dataUsageMet, fortnight1.installWO + fortnight1.relocationWO);
+            const f1StbDeduction = (fortnight1.installWO + fortnight1.relocationWO - fortnight1.stbDemoCompleted) * 100;
+            const f1BaseCommission = f1EligibleWO * 350 - f1StbDeduction;
+            
+            breakdown.push({
+              title: 'Fortnight 1 - Base Commission',
+              formula: '(' + f1EligibleWO + ' × ₹350) - (' + (fortnight1.installWO + fortnight1.relocationWO - fortnight1.stbDemoCompleted) + ' × ₹100)',
+              amount: f1BaseCommission
+            });
+            totalCommission += f1BaseCommission;
+
+            const muToUbrRate = partnerInfo.jcType === 'Type-C' ? 400 : 450;
+            const f1MuToUbr = fortnight1.muToUbrWO * muToUbrRate;
+            breakdown.push({
+              title: 'F1 - MU to UBR',
+              formula: fortnight1.muToUbrWO + ' × ₹' + muToUbrRate,
+              amount: f1MuToUbr
+            });
+            totalCommission += f1MuToUbr;
+
+            const f1DeviceReplacement = fortnight1.deviceReplacementSR * 100;
+            breakdown.push({
+              title: 'F1 - Device SR',
+              formula: fortnight1.deviceReplacementSR + ' × ₹100',
+              amount: f1DeviceReplacement
+            });
+            totalCommission += f1DeviceReplacement;
+
+            const f1TotalConnections = fortnight1.installWO + fortnight1.relocationWO;
+            const f1VLB = f1TotalConnections >= 10 ? f1EligibleWO * 50 : 0;
+            breakdown.push({
+              title: 'F1 - Volume Bonus',
+              formula: f1TotalConnections >= 10 ? f1EligibleWO + ' × ₹50' : 'Not eligible',
+              amount: f1VLB
+            });
+            totalCommission += f1VLB;
+
+            const f2EligibleWO = Math.min(fortnight2.dataUsageMet, fortnight2.installWO + fortnight2.relocationWO);
+            const f2StbDeduction = (fortnight2.installWO + fortnight2.relocationWO - fortnight2.stbDemoCompleted) * 100;
+            const f2BaseCommission = f2EligibleWO * 350 - f2StbDeduction;
+            
+            breakdown.push({
+              title: 'Fortnight 2 - Base Commission',
+              formula: '(' + f2EligibleWO + ' × ₹350) - (' + (fortnight2.installWO + fortnight2.relocationWO - fortnight2.stbDemoCompleted) + ' × ₹100)',
+              amount: f2BaseCommission
+            });
+            totalCommission += f2BaseCommission;
+
+            const f2MuToUbr = fortnight2.muToUbrWO * muToUbrRate;
+            breakdown.push({
+              title: 'F2 - MU to UBR',
+              formula: fortnight2.muToUbrWO + ' × ₹' + muToUbrRate,
+              amount: f2MuToUbr
+            });
+            totalCommission += f2MuToUbr;
+
+            const f2DeviceReplacement = fortnight2.deviceReplacementSR * 100;
+            breakdown.push({
+              title: 'F2 - Device SR',
+              formula: fortnight2.deviceReplacementSR + ' × ₹100',
+              amount: f2DeviceReplacement
+            });
+            totalCommission += f2DeviceReplacement;
+
+            const f2TotalConnections = fortnight2.installWO + fortnight2.relocationWO;
+            const f2VLB = f2TotalConnections >= 10 ? f2EligibleWO * 50 : 0;
+            breakdown.push({
+              title: 'F2 - Volume Bonus',
+              formula: f2TotalConnections >= 10 ? f2EligibleWO + ' × ₹50' : 'Not eligible',
+              amount: f2VLB
+            });
+            totalCommission += f2VLB;
+
+            const speedScore = getKPIScore(kpi.speedExecution, 'speed');
+            const qualityScore = getKPIScore(kpi.qualityInstall, 'quality');
+            const csatScore = getKPIScore(kpi.csat, 'csat');
+            const repeatSRScore = getKPIScore(kpi.repeatSR, 'repeatSR');
+            const avgRating = (speedScore + qualityScore + csatScore + repeatSRScore) / 4;
+            const ratingMultiplier = getRatingMultiplier(avgRating);
+
+            const f1WOCount = fortnight1.installWO + fortnight1.relocationWO;
+            const f1PLIBaseRate = getPLIRate(f1WOCount, partnerInfo.jcType);
+            const f1PLI_WO = f1EligibleWO * f1PLIBaseRate * ratingMultiplier;
+            const f1PLI_SR = fortnight1.deviceReplacementSR * 48 * ratingMultiplier;
+            
+            breakdown.push({
+              title: 'F1 - PLI (WO)',
+              formula: f1EligibleWO + ' × ₹' + f1PLIBaseRate + ' × ' + ratingMultiplier.toFixed(2),
+              amount: f1PLI_WO
+            });
+            totalCommission += f1PLI_WO;
+
+            breakdown.push({
+              title: 'F1 - PLI (SR)',
+              formula: fortnight1.deviceReplacementSR + ' × ₹48 × ' + ratingMultiplier.toFixed(2),
+              amount: f1PLI_SR
+            });
+            totalCommission += f1PLI_SR;
+
+            const f2WOCount = fortnight2.installWO + fortnight2.relocationWO;
+            const f2PLIBaseRate = getPLIRate(f2WOCount, partnerInfo.jcType);
+            const f2PLI_WO = f2EligibleWO * f2PLIBaseRate * ratingMultiplier;
+            const f2PLI_SR = fortnight2.deviceReplacementSR * 48 * ratingMultiplier;
+            
+            breakdown.push({
+              title: 'F2 - PLI (WO)',
+              formula: f2EligibleWO + ' × ₹' + f2PLIBaseRate + ' × ' + ratingMultiplier.toFixed(2),
+              amount: f2PLI_WO
+            });
+            totalCommission += f2PLI_WO;
+
+            breakdown.push({
+              title: 'F2 - PLI (SR)',
+              formula: fortnight2.deviceReplacementSR + ' × ₹48 × ' + ratingMultiplier.toFixed(2),
+              amount: f2PLI_SR
+            });
+            totalCommission += f2PLI_SR;
+
+            let directORNTotal = 0;
+            directORN.forEach((orn) => {
+              const rate = getDirectORNRate(orn.planValue, orn.validity, directORN.length);
+              directORNTotal += rate;
+            });
+            
+            if (directORN.length > 0) {
+              breakdown.push({
+                title: 'Direct ORN',
+                formula: directORN.length + ' ORNs',
+                amount: directORNTotal
+              });
+              totalCommission += directORNTotal;
+            }
+
+            const bookingTotal = (bookings.booking4444 * 400) + (bookings.booking3333 * 300) + 
+                                 (bookings.booking2222 * 200) + (bookings.booking1111 * 96);
+            
+            if (bookingTotal > 0) {
+              breakdown.push({
+                title: 'Bookings',
+                formula: '₹4444:' + bookings.booking4444 + ', ₹3333:' + bookings.booking3333 + ', ₹2222:' + bookings.booking2222 + ', ₹1111:' + bookings.booking1111,
+                amount: bookingTotal
+              });
+              totalCommission += bookingTotal;
+            }
+
+            const bookingToORNTotal = (bookingToORN.own + bookingToORN.others) * 20;
+            if (bookingToORNTotal > 0) {
+              breakdown.push({
+                title: 'Booking to ORN',
+                formula: '(' + bookingToORN.own + ' + ' + bookingToORN.others + ') × ₹20',
+                amount: bookingToORNTotal
+              });
+              totalCommission += bookingToORNTotal;
+            }
+
+            const uo_f1_rate = getUnlimitedOfferRate(unlimitedOffer.fortnight1);
+            const uo_f1_total = unlimitedOffer.fortnight1 * uo_f1_rate;
+            
+            if (uo_f1_total > 0) {
+              breakdown.push({
+                title: 'Unlimited Offer F1',
+                formula: unlimitedOffer.fortnight1 + ' × ₹' + uo_f1_rate,
+                amount: uo_f1_total
+              });
+              totalCommission += uo_f1_total;
+            }
+
+            const uo_f2_rate = getUnlimitedOfferRate(unlimitedOffer.fortnight2);
+            const uo_f2_total = unlimitedOffer.fortnight2 * uo_f2_rate;
+            
+            if (uo_f2_total > 0) {
+              breakdown.push({
+                title: 'Unlimited Offer F2',
+                formula: unlimitedOffer.fortnight2 + ' × ₹' + uo_f2_rate,
+                amount: uo_f2_total
+              });
+              totalCommission += uo_f2_total;
+            }
+
+            const skycTotal = (skyc.newActivation * 50) + (skyc.mnp * 100);
+            if (skycTotal > 0) {
+              breakdown.push({
+                title: 'SKYC',
+                formula: 'New:' + skyc.newActivation + ' × ₹50, MNP:' + skyc.mnp + ' × ₹100',
+                amount: skycTotal
+              });
+              totalCommission += skycTotal;
+            }
+
+            const totalExtenders = extender.jcm0112 + extender.je6801;
+            const jcm0112Rate = getExtenderRate(totalExtenders, 'JCM0112');
+            const je6801Rate = getExtenderRate(totalExtenders, 'JE6801');
+            const extenderTotal = (extender.jcm0112 * jcm0112Rate) + (extender.je6801 * je6801Rate);
+            
+            if (extenderTotal > 0) {
+              breakdown.push({
+                title: 'Jio Extender',
+                formula: 'JCM:' + extender.jcm0112 + ' × ₹' + jcm0112Rate + ', JE:' + extender.je6801 + ' × ₹' + je6801Rate,
+                amount: extenderTotal
+              });
+              totalCommission += extenderTotal;
+            }
+
+            const starterPackTotal = other.starterPack * 72;
+            if (starterPackTotal > 0) {
+              breakdown.push({
+                title: 'Starter Pack',
+                formula: other.starterPack + ' × ₹72',
+                amount: starterPackTotal
+              });
+              totalCommission += starterPackTotal;
+            }
+
+            const matchingNumberTotal = other.matchingNumber * 10;
+            if (matchingNumberTotal > 0) {
+              breakdown.push({
+                title: 'Matching Number',
+                formula: other.matchingNumber + ' × ₹10',
+                amount: matchingNumberTotal
+              });
+              totalCommission += matchingNumberTotal;
+            }
+
+            return { breakdown, totalCommission };
+          };
+
+          const addDirectORN = () => {
+            setDirectORN([...directORN, { planValue: '398', validity: '5M' }]);
+          };
+
+          const updateDirectORN = (index, field, value) => {
+            const updated = [...directORN];
+            updated[index][field] = value;
+            setDirectORN(updated);
+          };
+
+          const removeDirectORN = (index) => {
+            setDirectORN(directORN.filter((_, i) => i !== index));
+          };
+
+          const result = calculateCommission();
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Calculator />
+                    <h1 className="text-3xl font-bold text-gray-800">HSP Lite-1 Commission Calculator</h1>
+                  </div>
+                  
+                  <div className="bg-indigo-50 rounded-lg p-4 mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User />
+                      <h2 className="text-xl font-semibold text-gray-800">Partner Information</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Partner Name</label>
+                        <input
+                          type="text"
+                          value={partnerInfo.name}
+                          onChange={(e) => setPartnerInfo({...partnerInfo, name: e.target.value})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Data Usage Met</label>
+                        <input
+                          type="number"
+                          value={fortnight2.dataUsageMet}
+                          onChange={(e) => setFortnight2({...fortnight2, dataUsageMet: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">STB Demo Done</label>
+                        <input
+                          type="number"
+                          value={fortnight2.stbDemoCompleted}
+                          onChange={(e) => setFortnight2({...fortnight2, stbDemoCompleted: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 rounded-lg p-4 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-3">KPI Performance</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Speed (%)</label>
+                        <input
+                          type="number"
+                          value={kpi.speedExecution}
+                          onChange={(e) => setKpi({...kpi, speedExecution: parseFloat(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Quality (%)</label>
+                        <input
+                          type="number"
+                          value={kpi.qualityInstall}
+                          onChange={(e) => setKpi({...kpi, qualityInstall: parseFloat(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">CSAT (%)</label>
+                        <input
+                          type="number"
+                          value={kpi.csat}
+                          onChange={(e) => setKpi({...kpi, csat: parseFloat(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Repeat SR (%)</label>
+                        <input
+                          type="number"
+                          value={kpi.repeatSR}
+                          onChange={(e) => setKpi({...kpi, repeatSR: parseFloat(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-center mb-3">
+                      <h2 className="text-xl font-semibold text-gray-800">Direct ORN</h2>
+                      <button
+                        onClick={addDirectORN}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                      >
+                        <Plus />
+                        Add ORN
+                      </button>
+                    </div>
+                    {directORN.map((orn, index) => (
+                      <div key={index} className="flex gap-2 mb-2">
+                        <select
+                          value={orn.planValue}
+                          onChange={(e) => updateDirectORN(index, 'planValue', e.target.value)}
+                          className="flex-1 px-3 py-2 border rounded-md"
+                        >
+                          <option value="398">₹398</option>
+                          <option value="399">₹399</option>
+                          <option value="1111">₹1111</option>
+                          <option value="599">₹599</option>
+                          <option value="888">₹888</option>
+                          <option value="699">₹699</option>
+                          <option value="899+">₹899+</option>
+                        </select>
+                        <select
+                          value={orn.validity}
+                          onChange={(e) => updateDirectORN(index, 'validity', e.target.value)}
+                          className="flex-1 px-3 py-2 border rounded-md"
+                        >
+                          <option value="1.6M">1.6M</option>
+                          <option value="2M">2M</option>
+                          <option value="3M">3M</option>
+                          <option value="5M">5M</option>
+                          <option value="6M">6M</option>
+                          <option value="12M">12M</option>
+                        </select>
+                        <button
+                          onClick={() => removeDirectORN(index)}
+                          className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                        >
+                          <Trash2 />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Other Commissions</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">₹4444 Booking</label>
+                        <input
+                          type="number"
+                          value={bookings.booking4444}
+                          onChange={(e) => setBookings({...bookings, booking4444: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">₹3333 Booking</label>
+                        <input
+                          type="number"
+                          value={bookings.booking3333}
+                          onChange={(e) => setBookings({...bookings, booking3333: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">₹2222 Booking</label>
+                        <input
+                          type="number"
+                          value={bookings.booking2222}
+                          onChange={(e) => setBookings({...bookings, booking2222: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">₹1111 Booking</label>
+                        <input
+                          type="number"
+                          value={bookings.booking1111}
+                          onChange={(e) => setBookings({...bookings, booking1111: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Own B2ORN</label>
+                        <input
+                          type="number"
+                          value={bookingToORN.own}
+                          onChange={(e) => setBookingToORN({...bookingToORN, own: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Others B2ORN</label>
+                        <input
+                          type="number"
+                          value={bookingToORN.others}
+                          onChange={(e) => setBookingToORN({...bookingToORN, others: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">UO F1</label>
+                        <input
+                          type="number"
+                          value={unlimitedOffer.fortnight1}
+                          onChange={(e) => setUnlimitedOffer({...unlimitedOffer, fortnight1: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">UO F2</label>
+                        <input
+                          type="number"
+                          value={unlimitedOffer.fortnight2}
+                          onChange={(e) => setUnlimitedOffer({...unlimitedOffer, fortnight2: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">SKYC New</label>
+                        <input
+                          type="number"
+                          value={skyc.newActivation}
+                          onChange={(e) => setSkyc({...skyc, newActivation: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">SKYC MNP</label>
+                        <input
+                          type="number"
+                          value={skyc.mnp}
+                          onChange={(e) => setSkyc({...skyc, mnp: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">JCM0112</label>
+                        <input
+                          type="number"
+                          value={extender.jcm0112}
+                          onChange={(e) => setExtender({...extender, jcm0112: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">JE6801</label>
+                        <input
+                          type="number"
+                          value={extender.je6801}
+                          onChange={(e) => setExtender({...extender, je6801: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Starter Pack</label>
+                        <input
+                          type="number"
+                          value={other.starterPack}
+                          onChange={(e) => setOther({...other, starterPack: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Matching No.</label>
+                        <input
+                          type="number"
+                          value={other.matchingNumber}
+                          onChange={(e) => setOther({...other, matchingNumber: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Commission Breakdown</h2>
+                    <div className="space-y-3">
+                      {result.breakdown.map((item, index) => (
+                        <div key={index} className="bg-white rounded-lg p-4 shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-gray-700">{item.title}</h3>
+                            <span className="text-lg font-bold text-green-600">
+                              ₹{item.amount.toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+                            {item.formula}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-6 pt-6 border-t-2 border-gray-300">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-gray-800">Total Commission</h2>
+                        <span className="text-3xl font-bold text-green-600">
+                          ₹{result.totalCommission.toFixed(2)}
+                        </span>
+                      </div>
+                      {partnerInfo.name && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          Partner: {partnerInfo.name} | PRM ID: {partnerInfo.prmId} | JC Type: {partnerInfo.jcType}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<HSPLCommissionCalculator />);
+    </script>
+</body>
+</html>-2 border border-gray-300 rounded-md"
+                          placeholder="Enter name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">PRM ID</label>
+                        <input
+                          type="text"
+                          value={partnerInfo.prmId}
+                          onChange={(e) => setPartnerInfo({...partnerInfo, prmId: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="Enter PRM ID"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">JC Type</label>
+                        <select
+                          value={partnerInfo.jcType}
+                          onChange={(e) => setPartnerInfo({...partnerInfo, jcType: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="Type-A">Type-A</option>
+                          <option value="Type-B">Type-B</option>
+                          <option value="Type-C">Type-C</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 rounded-lg p-4 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Fortnight 1 (1st-15th)</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Install WO</label>
+                        <input
+                          type="number"
+                          value={fortnight1.installWO}
+                          onChange={(e) => setFortnight1({...fortnight1, installWO: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Relocation WO</label>
+                        <input
+                          type="number"
+                          value={fortnight1.relocationWO}
+                          onChange={(e) => setFortnight1({...fortnight1, relocationWO: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">MU to UBR</label>
+                        <input
+                          type="number"
+                          value={fortnight1.muToUbrWO}
+                          onChange={(e) => setFortnight1({...fortnight1, muToUbrWO: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Device SR</label>
+                        <input
+                          type="number"
+                          value={fortnight1.deviceReplacementSR}
+                          onChange={(e) => setFortnight1({...fortnight1, deviceReplacementSR: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Data Usage Met</label>
+                        <input
+                          type="number"
+                          value={fortnight1.dataUsageMet}
+                          onChange={(e) => setFortnight1({...fortnight1, dataUsageMet: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">STB Demo Done</label>
+                        <input
+                          type="number"
+                          value={fortnight1.stbDemoCompleted}
+                          onChange={(e) => setFortnight1({...fortnight1, stbDemoCompleted: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 rounded-lg p-4 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Fortnight 2 (16th-31st)</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Install WO</label>
+                        <input
+                          type="number"
+                          value={fortnight2.installWO}
+                          onChange={(e) => setFortnight2({...fortnight2, installWO: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Relocation WO</label>
+                        <input
+                          type="number"
+                          value={fortnight2.relocationWO}
+                          onChange={(e) => setFortnight2({...fortnight2, relocationWO: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">MU to UBR</label>
+                        <input
+                          type="number"
+                          value={fortnight2.muToUbrWO}
+                          onChange={(e) => setFortnight2({...fortnight2, muToUbrWO: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py-2 border rounded-md"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Device SR</label>
+                        <input
+                          type="number"
+                          value={fortnight2.deviceReplacementSR}
+                          onChange={(e) => setFortnight2({...fortnight2, deviceReplacementSR: parseInt(e.target.value) || 0})}
+                          className="w-full px-3 py
